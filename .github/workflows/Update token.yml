@@ -1,0 +1,35 @@
+name: Update Tokens
+
+on:
+  schedule:
+    - cron: '0 */8 * * *'  # Every 8 hours
+  workflow_dispatch:        # Manual run option
+
+jobs:
+  update-tokens:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.x'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install requests python-dotenv
+
+      - name: Run token update script
+        run: python update_tokens.py
+
+      - name: Commit and push if changed
+        run: |
+          git config --global user.email "action@github.com"
+          git config --global user.name "GitHub Action"
+          git pull --rebase origin main
+          git add token_bd.json token_ind.json token_br.json
+          git diff --quiet && git diff --staged --quiet || git commit -m "Update tokens [automated]"
+          git push origin main
